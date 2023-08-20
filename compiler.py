@@ -16,8 +16,41 @@ class Compiler:
     ############################################################################
 
     def rco_exp(self, e: expr, need_atomic: bool) -> Tuple[expr, Temporaries]:
-        # YOUR CODE HERE
-        raise Exception('rco_exp not implemented')
+        """
+        Make operands atomic.
+        Return a pair consisting of the new expression and a list of pairs,
+        associating new temporary variables with their initializing expressions.
+        """
+        match e:
+            case Constant(_) | Name(_):
+                return (e, [])
+            case Call(Name('input_int'), []):
+                if need_atomic:
+                    tmp = Name(generate_name())
+                    return (tmp, [(tmp, e)])
+                else:
+                    return (e, [])
+            case UnaryOp(USub(), e):
+                e_atomic, tmps = self.rco_exp(e, True)
+                if need_atomic:
+                    tmp = Name(generate_name())
+                    tmps.append((tmp, UnaryOp(USub(), e_atomic)))
+                    return (tmp, tmps)
+                else:
+                    return (UnaryOp(USub(), e_atomic), tmps)
+            case BinOp(e1, op, e2):
+               e1_atomic, tmps1 = self.rco_exp(e1, True) 
+               e2_atomic, tmps2 = self.rco_exp(e2, True)
+               if need_atomic:
+                   tmp = Name(generate_name())
+                   tmps = tmps1 + tmps2
+                   tmps.append(tmp, BinOp(e1_atomic, op, e2_atomic))
+                   return (tmp, tmps)
+               else:
+                   tmps = tmps1 + tmps2
+                   return (BinOp(e1_atomic, op, e2_atomic), tmps)
+            case _:
+                raise Exception('unhandled case')
 
     def rco_stmt(self, s: stmt) -> List[stmt]:
         # YOUR CODE HERE
