@@ -45,7 +45,7 @@ class Compiler:
                if need_atomic:
                    tmp = Name(generate_name())
                    tmps = tmps1 + tmps2
-                   tmps.append(tmp, BinOp(e1_atomic, op, e2_atomic))
+                   tmps.append((tmp, BinOp(e1_atomic, op, e2_atomic)))
                    return (tmp, tmps)
                else:
                    tmps = tmps1 + tmps2
@@ -81,7 +81,10 @@ class Compiler:
     def remove_complex_operands(self, p: Module) -> Module:
        match p:
            case Module(stmts):
-                return Module([self.rco_stmt(stmt) for stmt in stmts])
+                res = []
+                for stmt in stmts:
+                    res.extend(self.rco_stmt(stmt))
+                return Module(res)
            case _:
                raise Exception('unhandled case')
 
