@@ -75,10 +75,12 @@ class Compiler:
             case _:
                 raise Exception('unhandled case')
 
-    # def remove_complex_operands(self, p: Module) -> Module:
-    #     # YOUR CODE HERE
-    #     raise Exception('remove_complex_operands not implemented')
-        
+    def remove_complex_operands(self, p: Module) -> Module:
+       match p:
+           case Module(stmts):
+                return Module([self.rco_stmt(stmt) for stmt in stmts])
+           case _:
+               raise Exception('unhandled case')
 
     ############################################################################
     # Select Instructions
