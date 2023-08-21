@@ -15,6 +15,7 @@ class Compiler:
     # Remove Complex Operands
     ############################################################################
 
+    # translation on the expr level
     def rco_exp(self, e: expr, need_atomic: bool) -> Tuple[expr, Temporaries]:
         """
         Make operands atomic.
@@ -52,6 +53,7 @@ class Compiler:
             case _:
                 raise Exception('unhandled case')
 
+    # translation on the stmt level
     def rco_stmt(self, s: stmt) -> List[stmt]:
         match s:
             case Expr(Call(Name('print'), [exp])):
@@ -75,6 +77,7 @@ class Compiler:
             case _:
                 raise Exception('unhandled case')
 
+    # translation on the module level
     def remove_complex_operands(self, p: Module) -> Module:
        match p:
            case Module(stmts):
