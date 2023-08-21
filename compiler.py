@@ -53,8 +53,27 @@ class Compiler:
                 raise Exception('unhandled case')
 
     def rco_stmt(self, s: stmt) -> List[stmt]:
-        # YOUR CODE HERE
-        raise Exception('rco_stmt not implemented')
+        match s:
+            case Expr(Call(Name('print'), [exp])):
+                exp_atomic, tmps = self.rco_exp(exp, True)
+                tmps_init = [Assign([tmp], init) for tmp, init in tmps]
+                res = tmps_init
+                res.append(Expr(Call(Name('print'), [exp_atomic])))
+                return res
+            case Expr(e):
+                e_mon, tmps = self.rco_exp(e, False)
+                tmps_init = [Assign([tmp], init) for tmp, init in tmps]
+                res = tmps_init
+                res.append(Expr(e_mon))
+                return res
+            case Assign([Name(var)], e):
+                e_mon, tmps = self.rco_exp(e, False)
+                tmps_init = [Assign([tmp], init) for tmp, init in tmps]
+                res = tmps_init
+                res.append(Assign([Name(var)], e_mon))
+                return res
+            case _:
+                raise Exception('unhandled case')
 
     # def remove_complex_operands(self, p: Module) -> Module:
     #     # YOUR CODE HERE
