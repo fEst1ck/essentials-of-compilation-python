@@ -93,16 +93,86 @@ class Compiler:
     ############################################################################
 
     def select_arg(self, e: expr) -> arg:
-        # YOUR CODE HERE
-        pass        
+        match e:
+            case Constant(n):
+                return Immediate(n)
+            case Name(var):
+                return Variable(var)
+            case _:
+                raise Exception('invalid input')
 
     def select_stmt(self, s: stmt) -> List[instr]:
-        # YOUR CODE HERE
-        pass        
+        match s:
+            case Expr(Call(Name('print'), [a_exp])):
+                arg = self.select_arg(a_exp)
+                return [
+                    Instr('movq', [arg, Reg('rdi')]),
+                    Callq(label_name('print_int'), 1)
+                ]
+            case Expr(exp):
+                match exp:
+                    case Call(Name('input_int'), []):
+                        return [
+                            Callq(label_name('read_int'), 0)
+                        ]
+                    case _:
+                        return []
+            case Assign([Name(lhs)], exp):
+                match exp:
+                    case Constant(n):
+                        return [
+                            Instr('movq', [Immediate(n), Variable(lhs)])
+                        ]
+                    case Name(rhs):
+                        return [
+                            Instr('movq', [Variable(rhs), Variable(lhs)])
+                        ]
+                    case Call(Name('input_int'), []):
+                        return [
+                            Callq(label_name('read_int'), 0),
+                            Instr('movq', [Reg('rax'), Variable(lhs)])
+                        ]
+                    case UnaryOp(USub(), Name(arg)) if lhs == arg:
+                        return [
+                            Instr('negq', [Variable(lhs)])
+                        ]
+                    case UnaryOp(USub(), a):
+                        return [
+                            Instr('movq', [self.select_arg(a), Variable(lhs)]),
+                            Instr('negq', [Variable(lhs)])
+                        ]
+                    case BinOp(Name(arg1), Add(), atm2) if lhs == arg1:
+                        return [
+                            Instr('addq', self.select_arg(atm2), Variable(lhs))
+                        ]
+                    case BinOp(atm1, Add(), Name(arg2)) if lhs == arg2:
+                        return [
+                            Instr('addq', self.select_arg(atm1), Variable(arg2))
+                        ]
+                    case BinOp(atm1, Add(), atm2):
+                        return [
+                            Instr('movq', [self.select_arg(atm2), Variable(lhs)]),
+                            Instr('addq', [self.select_arg(atm1), Variable(lhs)])
+                        ]
+                    case BinOp(Name(atm1), Sub(), atm2) if lhs == atm1:
+                        return [
+                            Instr('subq', self.select_arg(atm2), Variable(lhs))
+                        ]
+                    case BinOp(atm1, Sub(), atm2):
+                        return [
+                            Instr('movq', [self.select_arg(atm1), Variable(lhs)]),
+                            Instr('subq', [self.select_arg(atm2), Variable(lhs)])
+                        ]
+                    case _:
+                        raise Exception('unhandled case')
 
-    # def select_instructions(self, p: Module) -> X86Program:
-    #     # YOUR CODE HERE
-    #     pass        
+    def select_instructions(self, p: Module) -> X86Program:
+        match p:
+            case Module(stmts):
+                instrs = []
+                for stmt in stmts:
+                    instrs.extend(self.select_stmt(stmt))
+                return X86Program(instrs)
 
     ############################################################################
     # Assign Homes
