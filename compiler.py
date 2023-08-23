@@ -179,22 +179,35 @@ class Compiler:
     ############################################################################
 
     def assign_homes_arg(self, a: arg, home: Dict[Variable, arg]) -> arg:
-        # YOUR CODE HERE
-        pass        
+        match a:
+            case Immediate(_) | Reg(_) | Deref(_, _):
+                return a
+            case Variable(_):
+                if a in home:
+                    return home[a]
+                else:
+                    assigned_home = Deref('rbp', - len(home) * 8)
+                    home[a] = assigned_home
+                    return assigned_home
 
     def assign_homes_instr(self, i: instr,
                            home: Dict[Variable, arg]) -> instr:
-        # YOUR CODE HERE
-        pass        
+        match i:
+            case Instr(i_name, args):
+                return Instr(i_name, [self.assign_homes_arg(arg, home) for arg in args])
+            case _:
+                return i
 
     def assign_homes_instrs(self, ss: List[instr],
                             home: Dict[Variable, arg]) -> List[instr]:
-        # YOUR CODE HERE
-        pass        
+        return [self.assign_homes_instr(i, home) for i in ss]
 
-    # def assign_homes(self, p: X86Program) -> X86Program:
-    #     # YOUR CODE HERE
-    #     pass        
+    def assign_homes(self, p: X86Program) -> X86Program:
+        home = dict()
+        self.assign_homes_instrs(p.body, home)
+        num_vars = len(home)
+        p.stack_space = num_vars * 8 if num_vars % 2 == 0 else num_vars * 8 + 8
+        return p
 
     ############################################################################
     # Patch Instructions
