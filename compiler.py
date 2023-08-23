@@ -204,7 +204,7 @@ class Compiler:
 
     def assign_homes(self, p: X86Program) -> X86Program:
         home = dict()
-        self.assign_homes_instrs(p.body, home)
+        p.body = self.assign_homes_instrs(p.body, home)
         num_vars = len(home)
         p.stack_space = num_vars * 8 if num_vars % 2 == 0 else num_vars * 8 + 8
         return p
