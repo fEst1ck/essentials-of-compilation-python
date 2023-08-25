@@ -214,16 +214,30 @@ class Compiler:
     ############################################################################
 
     def patch_instr(self, i: instr) -> List[instr]:
-        # YOUR CODE HERE
-        pass        
+        match i:
+            case Instr(i_name, [Deref(reg1, off1), Deref(reg2, off2)]):
+                return [
+                    Instr('movq', [Deref(reg1, off1), Reg('rax')]),
+                    Instr(i_name, [Reg('rax'), Deref(reg2, off2)])
+                ]
+            case Instr(i_name, [Immediate(n), Deref(reg2, off2)]) if n > 2 ** 16:
+                return [
+                    Instr('movq', [Immediate(n), Reg('rax')]),
+                    Instr(i_name, [Reg('rax'), Deref(reg2, off2)])
+                ]
+            case _:
+                return [i]
 
     def patch_instrs(self, ss: List[instr]) -> List[instr]:
-        # YOUR CODE HERE
-        pass        
+        res = []
+        for s in ss:
+            res.extend(self.patch_instr(s))
+        return res
 
-    # def patch_instructions(self, p: X86Program) -> X86Program:
-    #     # YOUR CODE HERE
-    #     pass        
+    def patch_instructions(self, p: X86Program) -> X86Program:
+        new_p = p
+        new_p.body = self.patch_instrs(p.body)
+        return new_p
 
     ############################################################################
     # Prelude & Conclusion
