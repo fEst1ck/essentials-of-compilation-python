@@ -186,7 +186,7 @@ class Compiler:
                 if a in home:
                     return home[a]
                 else:
-                    assigned_home = Deref('rbp', - len(home) * 8)
+                    assigned_home = Deref('rbp', - len(home) * 8 - 8)
                     home[a] = assigned_home
                     return assigned_home
 
@@ -243,7 +243,20 @@ class Compiler:
     # Prelude & Conclusion
     ############################################################################
 
-    # def prelude_and_conclusion(self, p: X86Program) -> X86Program:
-    #     # YOUR CODE HERE
-    #     pass        
+    def prelude_and_conclusion(self, p: X86Program) -> X86Program:
+        prelude = [
+            # '\t.globl main\n',
+            # f'{label_name("main"):}\n',
+            Instr('pushq', [Reg('rbp')]),
+            Instr('movq', [Reg('rsp'), Reg('rbp')]),
+            Instr('subq', [Immediate(p.stack_space), Reg('rsp')])
+        ]
+        conclusion = [
+            Instr('addq', [Immediate(p.stack_space), Reg('rsp')]),
+            Instr('popq', [Reg('rbp')]),
+            '    retq\n'
+        ]
+        res = prelude + p.body + conclusion
+        p.body = res
+        return p
 
